@@ -35,3 +35,10 @@ Feature: Background
       | Piter | One        | db_two |
       | James | Two        | db_two |
       | Bill  | Three      | db_two |
+    And the following groups should exist:
+      | name   | origin |
+      | First  | db_one |
+      | Second | db_one |
+      | One    | db_two |
+      | Two    | db_two |
+      | Three  | db_two |
