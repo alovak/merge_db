@@ -1,13 +1,26 @@
-Given /^a database named "([^"]*)"$/ do |db_name|
-  ActiveRecord::Base.establish_connection(connection_params)
-  ActiveRecord::Base.connection.create_database db_name
-
-  created_databases << db_name
+Given /^a schema:$/ do |string|
+  Given 'a file named "temp/schema.rb" with:', string
 end
 
-Given /^a table "([^"]*)" in "([^"]*)" with:$/ do |arg1, arg2, table|
-  # table is a Cucumber::Ast::Table
-  pending # express the regexp above with the code you wish you had
+Given /^a database named "([^"]*)" with schema$/ do |db_name|
+  connection.drop_database db_name
+  connection.create_database db_name
+
+  created_databases << db_name
+
+  connection.execute("use #{db_name}")
+
+  schema = File.read("./tmp/aruba/temp/schema.rb")
+
+  instance_eval schema
+end
+
+Given /^a table "([^"]*)" in "([^"]*)" with:$/ do |table_name, db_name, data|
+  connection.execute("use #{db_name}")
+
+  data.hashes.each do |fixture|
+    connection.insert_fixture(fixture, table_name)
+  end
 end
 
 When /^I use "([^"]*)"$/ do |arg1|

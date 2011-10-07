@@ -4,9 +4,9 @@ Feature: Background
   I want to merge all databases
 
   Scenario:
-    Given a file named "temp/schema.rb" with:
+    Given a schema:
       """
-      ActiveRecord::Schema.define do
+      Schema.define do
         create_table "users" do |t|
           t.integer  "id"
           t.string   "name"
@@ -23,38 +23,27 @@ Feature: Background
         end
       end
       """
-    And a database named "db_source" with "schema.rb"
-    And a database named "db_target" with "schema.rb"
-    # And the following fields in "db_destination.users"
-      # | name     | type     |
-      # | id       | integer  |
-      # | name     | string   |
-      # | group_id | integer  |
-    # And the following fields in "db_destination.group"
-      # | name     | type     |
-      # | id       | integer  |
-      # | name     | string   |
-    # Given a database named "db_one"
-    # And a table "users" in "db_one" with:
-      # | id | name  | group_id |
-      # | 1  | John  | 1        |
-      # | 2  | Marry | 2        |
-    # And a table "groups" in "db_one" with:
-      # | id | name   |бк
-      # | 1  | First  |
-      # | 2  | Second |
-    # Given a database named "db_two"
-    # And a table "users" in "db_two" with:
-      # | id | name  | group_id |
-      # | 1  | Piter | 1        |
-      # | 2  | James | 2        |
-      # | 2  | Bill  | 3        |
-    # And a table "groups" in "db_two" with:
-      # | id | name   |
-      # | 1  | One    |
-      # | 2  | Two    |
-      # | 3  | Three    |
-    # When I run `merge_db db_one db_two -in db_merged`
+    And a database named "db_source" with schema
+    And a database named "db_target" with schema
+    And a table "users" in "db_source" with:
+    | id | name  | group_id |
+    | 1  | John       | 1        |
+    | 2  | Marry      | 2        |
+    And a table "groups" in "db_source" with:
+    | id | name   |
+    | 1  | First  |
+    | 2  | Second |
+    And a table "users" in "db_target" with:
+    | id | name  | group_id |
+    | 1  | Piter | 1        |
+    | 2  | James | 2        |
+    | 3  | Bill  | 3        |
+    And a table "groups" in "db_target" with:
+    | id | name   |
+    | 1  | One    |
+    | 2  | Two    |
+    | 3  | Three    |
+    # When I run `merge_db db_source --into db_target`
     # And I use "db_merged"
     # Then 5 users should exist
     # And  5 groups should exist
