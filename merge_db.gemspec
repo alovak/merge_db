@@ -18,4 +18,12 @@ Gem::Specification.new do |s|
   s.test_files    = `git ls-files -- {test,spec,features}/*`.split("\n")
   s.executables   = `git ls-files -- bin/*`.split("\n").map{ |f| File.basename(f) }
   s.require_paths = ["lib"]
+
+  s.add_development_dependency "cucumber"
+  s.add_development_dependency "aruba"
+  s.add_development_dependency "guard"
+  s.add_development_dependency "guard-cucumber"
+  s.add_development_dependency "ruby-debug19"
+  s.add_runtime_dependency "activerecord"
+  s.add_runtime_dependency "mysql2"
 end
