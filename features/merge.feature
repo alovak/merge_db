@@ -43,7 +43,7 @@ Feature: Background
     | 1  | One    |
     | 2  | Two    |
     | 3  | Three    |
-    # When I run `merge_db db_source --into db_target`
+    When I run in shell "./bin/merge_db db_source --into db_target"
     # And I use "db_merged"
     # Then 5 users should exist
     # And  5 groups should exist

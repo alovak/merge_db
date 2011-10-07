@@ -15,6 +15,11 @@ Given /^a database named "([^"]*)" with schema$/ do |db_name|
   instance_eval schema
 end
 
+When /^I run in shell "([^"]*)"$/ do |command|
+  @output = `#{command}`
+  puts @output
+end
+
 Given /^a table "([^"]*)" in "([^"]*)" with:$/ do |table_name, db_name, data|
   connection.execute("use #{db_name}")
 
