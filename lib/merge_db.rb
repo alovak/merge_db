@@ -1,6 +1,7 @@
+require "rubygems"
+require "bundler/setup"
+
 module MergeDb
   def self.hello
-    puts "hello"
   end
-  # Your code goes here...
 end

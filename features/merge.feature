@@ -43,21 +43,21 @@ Feature: Background
     | 1  | One    |
     | 2  | Two    |
     | 3  | Three    |
-    When I run in shell "./bin/merge_db db_source --into db_target"
-    # And I use "db_merged"
-    # Then 5 users should exist
-    # And  5 groups should exist
-    # And the following users should exist:
-      # | name  | group(name) | origin(name) |
-      # | John  | First      | db_one        |
-      # | Marry | Second     | db_one        |
-      # | Piter | One        | db_two        |
-      # | James | Two        | db_two        |
-      # | Bill  | Three      | db_two        |
-    # And the following groups should exist:
-      # | name   | origin(name) |
-      # | First  | db_one       |
-      # | Second | db_one       |
-      # | One    | db_two       |
-      # | Two    | db_two       |
-      # | Three  | db_two       |
+    When I run in shell "thor db:merge -s db_source -t db_target"
+    And I connected to "db_target"
+    Then 5 users should exist
+    And  5 groups should exist
+    Then the following users exist:
+    | name  | group(name) | origin(name) |
+    | John  | First      | db_one        |
+    | Marry | Second     | db_one        |
+    | Piter | One        | db_two        |
+    | James | Two        | db_two        |
+    | Bill  | Three      | db_two        |
+    And the following groups exist:
+      | name   | origin(name) |
+      | First  | db_one       |
+      | Second | db_one       |
+      | One    | db_two       |
+      | Two    | db_two       |
+      | Three  | db_two       |

@@ -24,6 +24,7 @@ Gem::Specification.new do |s|
   s.add_development_dependency "guard"
   s.add_development_dependency "guard-cucumber"
   s.add_development_dependency "ruby-debug19"
+  s.add_runtime_dependency "thor"
   s.add_runtime_dependency "activerecord"
   s.add_runtime_dependency "mysql2"
 end

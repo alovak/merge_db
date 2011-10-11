@@ -32,12 +32,13 @@ When /^I use "([^"]*)"$/ do |arg1|
   pending # express the regexp above with the code you wish you had
 end
 
-Then /^(\d+) users should exist$/ do |arg1|
-  pending # express the regexp above with the code you wish you had
+When /^I connected to "([^"]*)"$/ do |db_name|
+  connection.execute("use #{db_name}")
 end
 
-Then /^(\d+) groups should exist$/ do |arg1|
-  pending # express the regexp above with the code you wish you had
+Then /^(\d+) (\w+)?s should exist$/ do |count, model_name|
+  model = model_name.camelize.constantize
+  model.count.should == count.to_i
 end
 
 Then /^the following users should exist:$/ do |table|
