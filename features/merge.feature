@@ -44,7 +44,8 @@ Feature: Background
     | 2  | Two    |
     | 3  | Three    |
     When I run in shell "thor db:merge -s db_source -t db_target"
-    And I connected to "db_target"
+    Then I should see "Databases were merged."
+    When I connected to "db_target"
     Then 5 users should exist
     And  5 groups should exist
     Then the following users exist:

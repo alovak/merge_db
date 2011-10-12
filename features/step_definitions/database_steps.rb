@@ -17,7 +17,10 @@ end
 
 When /^I run in shell "([^"]*)"$/ do |command|
   @output = `#{command}`
-  puts @output
+end
+
+Then /^I should see "([^"]*)"$/ do |str|
+  @output.should include(str)
 end
 
 Given /^a table "([^"]*)" in "([^"]*)" with:$/ do |table_name, db_name, data|

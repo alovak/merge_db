@@ -6,5 +6,6 @@ class Db < Thor
   def merge
     source = options[:source]
     target = options[:target]
+    puts "Databases were merged."
   end
 end
