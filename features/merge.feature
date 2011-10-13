@@ -11,15 +11,11 @@ Feature: Background
           t.integer  "id"
           t.string   "name"
           t.integer  "group_id"
-          t.datetime "created_at"
-          t.datetime "updated_at"
         end
 
         create_table "groups", :force => true do |t|
           t.integer  "id"
           t.string   "name"
-          t.datetime "created_at"
-          t.datetime "updated_at"
         end
       end
       """
@@ -27,8 +23,8 @@ Feature: Background
     And a database named "db_target" with schema
     And a table "users" in "db_source" with:
     | id | name  | group_id |
-    | 1  | John       | 1        |
-    | 2  | Marry      | 2        |
+    | 1  | John  | 1        |
+    | 2  | Marry | 2        |
     And a table "groups" in "db_source" with:
     | id | name   |
     | 1  | First  |
@@ -39,10 +35,10 @@ Feature: Background
     | 2  | James | 2        |
     | 3  | Bill  | 3        |
     And a table "groups" in "db_target" with:
-    | id | name   |
-    | 1  | One    |
-    | 2  | Two    |
-    | 3  | Three    |
+    | id | name  |
+    | 1  | One   |
+    | 2  | Two   |
+    | 3  | Three |
     When I run in shell "thor db:merge -s db_source -t db_target"
     Then I should see "Databases were merged."
     When I connected to "db_target"

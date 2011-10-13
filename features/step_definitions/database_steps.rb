@@ -23,6 +23,10 @@ Then /^I should see "([^"]*)"$/ do |str|
   @output.should include(str)
 end
 
+Then /^I should see output$/ do
+  puts @output
+end
+
 Given /^a table "([^"]*)" in "([^"]*)" with:$/ do |table_name, db_name, data|
   connection.execute("use #{db_name}")
 

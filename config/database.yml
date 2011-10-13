@@ -1,0 +1,17 @@
+defaults: &defaults
+  adapter: mysql2
+  encoding: utf8
+  host: localhost
+  reconnect: false
+
+db_source:
+  database: db_source
+  username: root
+  password: ''
+  <<: *defaults
+
+db_target:
+  database: db_target
+  username: root
+  password: ''
+  <<: *defaults

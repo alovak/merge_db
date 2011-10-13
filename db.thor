@@ -1,3 +1,7 @@
+$LOAD_PATH.unshift(File.dirname(__FILE__) + '/lib')
+
+require 'merge_db'
+
 class Db < Thor
   desc "merge", "merge two databases"
   method_option :source, :aliases => "-s", :required => true, :desc => "Records will be copied from this database"
@@ -6,6 +10,7 @@ class Db < Thor
   def merge
     source = options[:source]
     target = options[:target]
-    puts "Databases were merged."
+
+    MergeDb.merge(source, target)
   end
 end
