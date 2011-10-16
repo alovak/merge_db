@@ -48,9 +48,14 @@ Then /^(\d+) (\w+)?s should exist$/ do |count, model_name|
   model.count.should == count.to_i
 end
 
-Then /^the following users should exist:$/ do |table|
-  # table is a Cucumber::Ast::Table
-  pending # express the regexp above with the code you wish you had
+Then /^the following (\w+)?s should exist:$/ do |model_name, table|
+  model = model_name.camelize.constantize
+
+  join_tables = table.column_names.collect { |name| name.split(".").first.singularize.to_sym if name =~ /\w+\.\w+/ }.delete_if(&:nil?)
+
+  table.hashes.each do |attributes|
+    model.joins(join_tables).where(attributes).should_not be_empty, "expected to find a record with attributes: #{attributes}"
+  end
 end
 
 Then /^the following groups should exist:$/ do |table|
