@@ -19,11 +19,15 @@ When /^I run in shell "([^"]*)"$/ do |command|
   @output = `#{command}`
 end
 
+When /^I merge "([^"]*)" into "([^"]*)"$/ do |source, target|
+  MergeDb::Merger.new(source, target).merge
+end
+
 Then /^I should see "([^"]*)"$/ do |str|
   @output.should include(str)
 end
 
-Then /^I should see output$/ do
+Then /^I should see the output$/ do
   puts @output
 end
 
@@ -61,4 +65,9 @@ end
 Then /^the following groups should exist:$/ do |table|
   # table is a Cucumber::Ast::Table
   pending # express the regexp above with the code you wish you had
+end
+
+Then /debug/ do
+  debugger
+  a = 1
 end

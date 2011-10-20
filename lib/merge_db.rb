@@ -21,16 +21,16 @@ module MergeDb
   class Target < ActiveRecord::Base
   end
 
-  class << self
-    def merge(source, target)
+  class Merger
+    def initialize(source, target)
       Source.establish_connection(Configuration.database[source])
       Target.establish_connection(Configuration.database[target])
+    end
 
+    def merge
       prepare_tables_in_target
       copy_data_from_source_to_target
-      update_association_ids
-
-      puts "Databases were merged."
+      restore_association_references
     end
 
     private
@@ -39,7 +39,7 @@ module MergeDb
       Target.connection.tables.each do |table|
         Target.connection.columns(table).each do |column|
           if column.name =~ /id$/
-            Target.connection.add_column(table, new_column_name(column.name), column.type)  
+            Target.connection.add_column(table, backup_column_name(column.name), column.type)  
           end
         end
       end
@@ -56,30 +56,45 @@ module MergeDb
       end
     end
 
-    def update_association_ids
-      # Update references
-      # for each table go through __id columns
-      # find __id of the association
-      # get id
-      # set association_id
+    def restore_association_references
+      Target.connection.tables.each do |table|
+        query = "select * from #{table}"
+
+        Target.connection.select_all(query).each do |record|
+          record.each do |column, value|
+            if column =~ /__id$/ && !value.nil?
+              # find an ssociation
+              association_table = column.split("__").first.pluralize
+              query = "select * from #{association_table} where _id = #{value}"
+              association = Target.connection.select_one(query)
+
+              # restore association references
+              update_query = "update #{table} set #{normalize_column_name(column)} = #{association["id"]} where id = #{record["id"]}"
+              Target.connection.update(update_query)
+            end
+          end
+        end
+      end
     end
 
     def prepare_for_merge(fixture)
       {}.tap do |new_fixture|
         fixture.each do |key, value|
-          next if key == "id"
-
-          new_fixture[new_column_name(key)] = value
+          new_fixture[backup_column_name(key)] = value
         end
       end
     end
 
-    def new_column_name(name)
+    def backup_column_name(name)
       if name =~ /id$/
         name = name.gsub(/id$/, "_id")
       else
         name
       end
+    end
+
+    def normalize_column_name(name)
+      name.gsub(/__id$/, '_id')
     end
   end
 end

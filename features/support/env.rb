@@ -2,6 +2,7 @@ $LOAD_PATH.unshift(File.dirname(__FILE__) + '/../../lib')
 require 'aruba/cucumber'
 require 'active_record'
 require 'ruby-debug'
+require 'merge_db'
 
 module CustomData
   def connection
