@@ -25,6 +25,7 @@ Feature: Background
       | id | name  | group_id |
       | 1  | John  | 1        |
       | 2  | Marry | 2        |
+      | 3  | Jane  | 2        |
     And a table "groups" in "db_source" with:
       | id | name   |
       | 1  | First  |
@@ -44,7 +45,7 @@ Feature: Background
     # Then I should see "Databases were merged."
     And I should see the output
     When I connected to "db_target"
-    Then 5 users should exist
+    Then 6 users should exist
     And  5 groups should exist
     Then the following users should exist:
       | name  | groups.name |
@@ -53,3 +54,4 @@ Feature: Background
       | Bill  | Three       |
       | John  | First       |
       | Marry | Second      |
+      | Jane  | Second      |

@@ -60,21 +60,38 @@ module MergeDb
       Target.connection.tables.each do |table|
         query = "select * from #{table}"
 
+        updated_columns = Hash.new {|hash, key| hash[key] = [] }
+
         Target.connection.select_all(query).each do |record|
           record.each do |column, value|
-            if column =~ /__id$/ && !value.nil?
-              # find an ssociation
-              association_table = column.split("__").first.pluralize
-              query = "select * from #{association_table} where _id = #{value}"
-              association = Target.connection.select_one(query)
+            if column =~ /__id$/ && !value.nil? && !updated_columns[column].include?(value)
+              
+              association = find_association_by_old_id(column, value)
+              
+              # remember restored column ids
+              updated_columns[column] << value
 
               # restore association references
-              update_query = "update #{table} set #{normalize_column_name(column)} = #{association["id"]} where id = #{record["id"]}"
+              update_query = "update #{table} set #{normalize_column_name(column)} = #{association["id"]} where #{column} = #{value}"
               Target.connection.update(update_query)
             end
           end
         end
+
+        # clean values in updated columns
+        unless updated_columns.empty?
+          columns_with_null = updated_columns.keys.collect {|column| "#{column} = NULL"}.join(", ")
+          debugger
+          query = "update #{table} set #{columns_with_null}"
+          Target.connection.execute(query)
+        end
       end
+    end
+
+    def find_association_by_old_id(column, value)
+      association_table = column.split("__").first.pluralize
+      query = "select * from #{association_table} where _id = #{value}"
+      association = Target.connection.select_one(query)
     end
 
     def prepare_for_merge(fixture)
