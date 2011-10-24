@@ -22,13 +22,20 @@ module MergeDb
   end
 
   class Merger
-    def initialize(source, target)
-      Source.establish_connection(Configuration.database[source])
-      Target.establish_connection(Configuration.database[target])
+
+    def initialize(params)
+      source = params[:source]
+      target = params[:target]
+
+      Source.establish_connection(Configuration.database[source]) if source
+      Target.establish_connection(Configuration.database[target]) if target
+    end
+
+    def prepare
+      prepare_tables_in_target
     end
 
     def merge
-      prepare_tables_in_target
       copy_data_from_source_to_target
       restore_association_references
     end
@@ -81,7 +88,6 @@ module MergeDb
         # clean values in updated columns
         unless updated_columns.empty?
           columns_with_null = updated_columns.keys.collect {|column| "#{column} = NULL"}.join(", ")
-          debugger
           query = "update #{table} set #{columns_with_null}"
           Target.connection.execute(query)
         end

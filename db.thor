@@ -11,6 +11,14 @@ class Db < Thor
     source = options[:source]
     target = options[:target]
 
-    MergeDb::Merger.new(source, target).merge
+    MergeDb::Merger.new(:source => source, :target => target).merge
+  end
+
+  desc "prepare", "creates columns to store ids from source database"
+  method_option :target, :aliases => "-t", :required => true, :desc => "database into which data will be copied"
+  def prepare
+    target = options[:target]
+
+    MergeDb::Merger.new(:target => target).prepare
   end
 end

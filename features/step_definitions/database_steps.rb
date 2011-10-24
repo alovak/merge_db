@@ -19,8 +19,12 @@ When /^I run in shell "([^"]*)"$/ do |command|
   @output = `#{command}`
 end
 
+When /^I prepare "([^"]*)"$/ do |target|
+  MergeDb::Merger.new(:target => target).prepare
+end
+
 When /^I merge "([^"]*)" into "([^"]*)"$/ do |source, target|
-  MergeDb::Merger.new(source, target).merge
+  MergeDb::Merger.new(:source => source, :target => target).merge
 end
 
 Then /^I should see "([^"]*)"$/ do |str|

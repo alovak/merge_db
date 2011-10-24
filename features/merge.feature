@@ -40,6 +40,7 @@ Feature: Background
       | 1  | One   |
       | 2  | Two   |
       | 3  | Three |
+    When I prepare "db_target"
     When I merge "db_source" into "db_target"
     # When I run in shell "thor db:merge -s db_source -t db_target"
     # Then I should see "Databases were merged."
