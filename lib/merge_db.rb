@@ -38,9 +38,18 @@ module MergeDb
     def merge
       copy_data_from_source_to_target
       restore_association_references
+      clean_backedup_primary_keys
     end
 
     private
+
+    def clean_backedup_primary_keys
+      Source.connection.tables.each do |table|
+        query = "update #{table} set _id = NULL"
+
+        Target.connection.execute(query)
+      end
+    end
 
     def prepare_tables_in_target
       Target.connection.tables.each do |table|

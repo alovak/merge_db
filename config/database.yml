@@ -4,8 +4,14 @@ defaults: &defaults
   host: localhost
   reconnect: false
 
-db_source:
-  database: db_source
+db_first:
+  database: db_first
+  username: root
+  password: ''
+  <<: *defaults
+
+db_second:
+  database: db_second
   username: root
   password: ''
   <<: *defaults

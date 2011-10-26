@@ -19,17 +19,27 @@ Feature: Background
         end
       end
       """
-    And a database named "db_source" with schema
+    And a database named "db_first" with schema
+    And a database named "db_second" with schema
     And a database named "db_target" with schema
-    And a table "users" in "db_source" with:
+    And a table "users" in "db_first" with:
       | id | name  | group_id |
       | 1  | John  | 1        |
       | 2  | Marry | 2        |
       | 3  | Jane  | 2        |
-    And a table "groups" in "db_source" with:
+    And a table "groups" in "db_first" with:
       | id | name   |
       | 1  | First  |
       | 2  | Second |
+    And a table "users" in "db_second" with:
+      | id | name  | group_id |
+      | 1  | Jeff  | 1        |
+      | 2  | Frank | 1        |
+      | 3  | Adam  | 2        |
+    And a table "groups" in "db_second" with:
+      | id | name     |
+      | 1  | First 2  |
+      | 2  | Second 2 |
     And a table "users" in "db_target" with:
       | id | name  | group_id |
       | 1  | Piter | 1        |
@@ -41,13 +51,13 @@ Feature: Background
       | 2  | Two   |
       | 3  | Three |
     When I prepare "db_target"
-    When I merge "db_source" into "db_target"
+    When I merge "db_first" into "db_target"
+    And I merge "db_second" into "db_target"
     # When I run in shell "thor db:merge -s db_source -t db_target"
     # Then I should see "Databases were merged."
-    And I should see the output
     When I connected to "db_target"
-    Then 6 users should exist
-    And  5 groups should exist
+    Then 9 users should exist
+    And  7 groups should exist
     Then the following users should exist:
       | name  | groups.name |
       | Piter | One         |
@@ -56,3 +66,6 @@ Feature: Background
       | John  | First       |
       | Marry | Second      |
       | Jane  | Second      |
+      | Jeff  | First 2     |
+      | Frank | First 2     |
+      | Adam  | Second 2    |
