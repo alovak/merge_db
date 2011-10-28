@@ -19,7 +19,7 @@ Feature: Background
         end
       end
       """
-    And a database named "db_first" with schema
+    Given a database named "db_first" with schema
     And a database named "db_second" with schema
     And a database named "db_target" with schema
     And a table "users" in "db_first" with:
@@ -69,3 +69,4 @@ Feature: Background
       | Jeff  | First 2     |
       | Frank | First 2     |
       | Adam  | Second 2    |
+
