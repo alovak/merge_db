@@ -8,11 +8,11 @@ module MergeDb
   class Merger
 
     def initialize(params)
-      source = params[:source]
-      target = params[:target]
+      @source_name = params[:source]
+      @target_name = params[:target]
 
-      Source.establish_connection(Configuration.database[source]) if source
-      Target.establish_connection(Configuration.database[target]) if target
+      Source.establish_connection(Configuration.database[@source_name]) if @source_name
+      Target.establish_connection(Configuration.database[@target_name]) if @target_name
     end
 
     def prepare
@@ -20,6 +20,7 @@ module MergeDb
     end
 
     def merge
+      add_db_to_scope
       copy_data_from_source_to_target
       restore_association_references
       clean_backedup_primary_keys
@@ -27,43 +28,69 @@ module MergeDb
 
     private
 
+    def target
+      Target.connection
+    end
+
+    def source
+      Source.connection
+    end
+
+    def add_db_to_scope
+      @scope_id = target.insert("insert into #{Configuration.scope_name.pluralize} (db_name) values ('#{@source_name}')")
+    end
+
     def clean_backedup_primary_keys
-      Source.connection.tables.each do |table|
+      source.tables.each do |table|
         query = "update #{table} set _id = NULL"
 
-        Target.connection.execute(query)
+        target.execute(query)
       end
     end
 
     def prepare_tables_in_target
-      Target.connection.tables.each do |table|
-        Target.connection.columns(table).each do |column|
-          if column.name =~ /id$/
-            Target.connection.add_column(table, backup_column_name(column.name), column.type)  
-          end
+      target.tables.each do |table|
+        target.columns(table).each do |column|
+          add_backup_id_column(table, column) if column.name =~ /id$/
         end
+
+        add_scope_id_column(table) if Configuration.scoped_tables.include? table
       end
     end
 
+    def add_backup_id_column(table, column)
+      target.add_column(table, backup_column_name(column.name), column.type)  
+    end
+
+    def add_scope_id_column(table)
+      target.add_column(table, scope_id_column, :integer)  
+    end
+
+    def scope_id_column
+      Configuration.scope_name + "_id"
+    end
+
     def copy_data_from_source_to_target
-      Source.connection.tables.each do |table|
+      source.tables.each do |table|
         query = "select * from #{table}"
 
-        Source.connection.select_all(query).each do |fixture|
+        source.select_all(query).each do |fixture|
           fixture_with_saved_ids = prepare_for_merge(fixture)
-          Target.connection.insert_fixture(fixture_with_saved_ids, table)
+          fixture_with_saved_ids[scope_id_column] = @scope_id if Configuration.scoped_tables.include? table
+          target.insert_fixture(fixture_with_saved_ids, table)
         end
       end
     end
 
     def restore_association_references
-      Target.connection.tables.each do |table|
+      target.tables.each do |table|
         query = "select * from #{table}"
 
         updated_columns = Hash.new {|hash, key| hash[key] = [] }
 
-        Target.connection.select_all(query).each do |record|
+        target.select_all(query).each do |record|
           record.each do |column, value|
+
             if column =~ /__id$/ && !value.nil? && !updated_columns[column].include?(value)
               
               association = find_association_by_old_id(column, value)
@@ -73,7 +100,7 @@ module MergeDb
 
               # restore association references
               update_query = "update #{table} set #{normalize_column_name(column)} = #{association["id"]} where #{column} = #{value}"
-              Target.connection.update(update_query)
+              target.update(update_query)
             end
           end
         end
@@ -82,7 +109,7 @@ module MergeDb
         unless updated_columns.empty?
           columns_with_null = updated_columns.keys.collect {|column| "#{column} = NULL"}.join(", ")
           query = "update #{table} set #{columns_with_null}"
-          Target.connection.execute(query)
+          target.execute(query)
         end
       end
     end
@@ -90,7 +117,7 @@ module MergeDb
     def find_association_by_old_id(column, value)
       association_table = column.split("__").first.pluralize
       query = "select * from #{association_table} where _id = #{value}"
-      association = Target.connection.select_one(query)
+      association = target.select_one(query)
     end
 
     def prepare_for_merge(fixture)

@@ -16,6 +16,12 @@ db_second:
   password: ''
   <<: *defaults
 
+db_third:
+  database: db_third
+  username: root
+  password: ''
+  <<: *defaults
+
 db_target:
   database: db_target
   username: root

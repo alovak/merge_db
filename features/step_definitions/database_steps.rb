@@ -1,8 +1,8 @@
-Given /^a schema:$/ do |string|
-  Given 'a file named "temp/schema.rb" with:', string
+Given /^a schema "([^"]*)":$/ do |schema_name, string|
+  Given %|a file named "temp/#{schema_name}" with:|, string
 end
 
-Given /^a database named "([^"]*)" with schema$/ do |db_name|
+Given /^a database named "([^"]*)" with schema "([^"]*)"$/ do |db_name, schema_name|
   connection.drop_database db_name
   connection.create_database db_name
 
@@ -10,7 +10,7 @@ Given /^a database named "([^"]*)" with schema$/ do |db_name|
 
   connection.execute("use #{db_name}")
 
-  schema = File.read("./tmp/aruba/temp/schema.rb")
+  schema = File.read("./tmp/aruba/temp/#{schema_name}")
 
   instance_eval schema
 end
