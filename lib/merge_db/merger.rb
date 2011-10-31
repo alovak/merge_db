@@ -10,9 +10,6 @@ module MergeDb
     def initialize(params)
       @source_name = params[:source]
       @target_name = params[:target]
-
-      Source.establish_connection(Configuration.database[@source_name]) if @source_name
-      Target.establish_connection(Configuration.database[@target_name]) if @target_name
     end
 
     def prepare
@@ -28,16 +25,66 @@ module MergeDb
 
     private
 
-    def target
-      Target.connection
-    end
+    def prepare_tables_in_target
+      target.tables.each do |table|
+        add_scope_id_column(table) if Configuration.scoped_tables.include? table
 
-    def source
-      Source.connection
+        target.columns(table)
+        .find_all {|column| column.name =~ /id$/}
+        .each do |column|
+          add_backup_id_column(table, column)
+        end
+      end
     end
 
     def add_db_to_scope
       @scope_id = target.insert("insert into #{Configuration.scope_name.pluralize} (db_name) values ('#{@source_name}')")
+    end
+
+    def copy_data_from_source_to_target
+      source.tables.each do |table|
+        query = "select * from #{table}"
+
+        source.select_all(query).each do |fixture|
+          fixture_with_saved_ids = prepare_for_merge(fixture)
+
+          if Configuration.scoped_tables.include? table
+            fixture_with_saved_ids[scope_id_column] = @scope_id
+          end
+
+          target.insert_fixture(fixture_with_saved_ids, table)
+        end
+      end
+    end
+
+    def restore_association_references
+      target.tables.each do |table|
+        query = "select * from #{table}"
+
+        restored_columns = Hash.new {|hash, key| hash[key] = [] }
+
+        target.select_all(query).each do |record|
+          record.each do |column, old_id|
+            if column =~ /__id$/ && !old_id.nil? && !restored_columns[column].include?(old_id)
+
+              restored_columns[column] << old_id
+
+              association = find_association_by_old_id(column, old_id)
+
+              new_id = association["id"]
+
+              update_query = "update #{table} set #{normalize_column_name(column)} = #{new_id} where #{column} = #{old_id}"
+              target.update(update_query)
+            end
+          end
+        end
+
+        unless restored_columns.empty?
+          columns_with_null = restored_columns.keys.collect {|column| "#{column} = NULL"}.join(", ")
+          query = "update #{table} set #{columns_with_null}"
+          target.execute(query)
+        end
+      end
     end
 
     def clean_backedup_primary_keys
@@ -45,16 +92,6 @@ module MergeDb
         query = "update #{table} set _id = NULL"
 
         target.execute(query)
-      end
-    end
-
-    def prepare_tables_in_target
-      target.tables.each do |table|
-        target.columns(table).each do |column|
-          add_backup_id_column(table, column) if column.name =~ /id$/
-        end
-
-        add_scope_id_column(table) if Configuration.scoped_tables.include? table
       end
     end
 
@@ -68,50 +105,6 @@ module MergeDb
 
     def scope_id_column
       Configuration.scope_name + "_id"
-    end
-
-    def copy_data_from_source_to_target
-      source.tables.each do |table|
-        query = "select * from #{table}"
-
-        source.select_all(query).each do |fixture|
-          fixture_with_saved_ids = prepare_for_merge(fixture)
-          fixture_with_saved_ids[scope_id_column] = @scope_id if Configuration.scoped_tables.include? table
-          target.insert_fixture(fixture_with_saved_ids, table)
-        end
-      end
-    end
-
-    def restore_association_references
-      target.tables.each do |table|
-        query = "select * from #{table}"
-
-        updated_columns = Hash.new {|hash, key| hash[key] = [] }
-
-        target.select_all(query).each do |record|
-          record.each do |column, value|
-
-            if column =~ /__id$/ && !value.nil? && !updated_columns[column].include?(value)
-              
-              association = find_association_by_old_id(column, value)
-              
-              # remember restored column ids
-              updated_columns[column] << value
-
-              # restore association references
-              update_query = "update #{table} set #{normalize_column_name(column)} = #{association["id"]} where #{column} = #{value}"
-              target.update(update_query)
-            end
-          end
-        end
-
-        # clean values in updated columns
-        unless updated_columns.empty?
-          columns_with_null = updated_columns.keys.collect {|column| "#{column} = NULL"}.join(", ")
-          query = "update #{table} set #{columns_with_null}"
-          target.execute(query)
-        end
-      end
     end
 
     def find_association_by_old_id(column, value)
@@ -138,6 +131,21 @@ module MergeDb
 
     def normalize_column_name(name)
       name.gsub(/__id$/, '_id')
+    end
+
+    def target
+      @target_connection ||= connect(Target, @target_name)
+    end
+
+    def source
+      @source_connection ||= connect(Source, @source_name)
+    end
+
+    def connect(constant, db_name)
+      if db_name
+        constant.establish_connection(Configuration.database[db_name])
+        constant.connection
+      end
     end
   end
 end
