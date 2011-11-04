@@ -13,7 +13,9 @@ module MergeDb
     end
 
     def prepare
+      puts "preparing db..."
       prepare_tables_in_target
+      puts "\ndone"
     end
 
     def merge
@@ -27,6 +29,7 @@ module MergeDb
 
     def prepare_tables_in_target
       target.tables.each do |table|
+        putc "."
         add_scope_id_column(table) if Configuration.scoped_tables.include? table
 
         target.columns(table)
@@ -43,9 +46,11 @@ module MergeDb
 
     def copy_data_from_source_to_target
       source.tables.each do |table|
+        puts "\nCopy #{table} records "
         query = "select * from #{table}"
 
         source.select_all(query).each do |fixture|
+          putc "."
           fixture_with_saved_ids = prepare_for_merge(fixture)
 
           if Configuration.scoped_tables.include? table
@@ -59,11 +64,13 @@ module MergeDb
 
     def restore_association_references
       target.tables.each do |table|
+        puts "\nRestore #{table} associations"
         query = "select * from #{table}"
 
         restored_columns = Hash.new {|hash, key| hash[key] = [] }
 
         target.select_all(query).each do |record|
+          putc "."
           record.each do |column, old_id|
             if column =~ /__id$/ && !old_id.nil? && !restored_columns[column].include?(old_id)
 
