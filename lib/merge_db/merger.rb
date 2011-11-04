@@ -33,7 +33,7 @@ module MergeDb
     def prepare_tables_in_target
       puts "Prepare target"
 
-      pbar = ProgressBar.new("tables", targte.tables.size)
+      pbar = ProgressBar.new("tables", target.tables.size)
 
       target.tables.each do |table|
 

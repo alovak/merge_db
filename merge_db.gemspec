@@ -6,11 +6,11 @@ Gem::Specification.new do |s|
   s.name        = "merge_db"
   s.version     = MergeDb::VERSION
   s.platform    = Gem::Platform::RUBY
-  s.authors     = ["TODO: Write your name"]
-  s.email       = ["TODO: Write your email address"]
+  s.authors     = ["Pavel Gabriel"]
+  s.email       = ["alovak@gmail.com"]
   s.homepage    = ""
-  s.summary     = %q{TODO: Write a gem summary}
-  s.description = %q{TODO: Write a gem description}
+  s.summary     = %q{Merge your Rails databases}
+  s.description = %q{With merge db you can easily merge your databases and save all associations}
 
   s.rubyforge_project = "merge_db"
 
@@ -24,6 +24,7 @@ Gem::Specification.new do |s|
   s.add_development_dependency "guard"
   s.add_development_dependency "guard-cucumber"
   s.add_development_dependency "ruby-debug19"
+
   s.add_runtime_dependency "thor"
   s.add_runtime_dependency "activerecord"
   s.add_runtime_dependency "mysql2"
