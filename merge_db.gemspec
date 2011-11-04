@@ -27,4 +27,5 @@ Gem::Specification.new do |s|
   s.add_runtime_dependency "thor"
   s.add_runtime_dependency "activerecord"
   s.add_runtime_dependency "mysql2"
+  s.add_runtime_dependency "ruby-progressbar"
 end

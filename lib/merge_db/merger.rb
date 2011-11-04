@@ -13,9 +13,7 @@ module MergeDb
     end
 
     def prepare
-      puts "preparing db..."
       prepare_tables_in_target
-      puts "\ndone"
     end
 
     def merge
@@ -25,11 +23,22 @@ module MergeDb
       clean_backedup_primary_keys
     end
 
+    def restore_associations
+      restore_association_references
+      clean_backedup_primary_keys
+    end
+
     private
 
     def prepare_tables_in_target
+      puts "Prepare target"
+
+      pbar = ProgressBar.new("tables", targte.tables.size)
+
       target.tables.each do |table|
-        putc "."
+
+        pbar.inc
+
         add_scope_id_column(table) if Configuration.scoped_tables.include? table
 
         target.columns(table)
@@ -38,6 +47,8 @@ module MergeDb
           add_backup_id_column(table, column)
         end
       end
+
+      pbar.finish
     end
 
     def add_db_to_scope
@@ -45,12 +56,20 @@ module MergeDb
     end
 
     def copy_data_from_source_to_target
+      puts "Copy data into target"
+
       source.tables.each do |table|
         puts "\nCopy #{table} records "
         query = "select * from #{table}"
 
-        source.select_all(query).each do |fixture|
-          putc "."
+        records = source.select_all(query)
+
+        pbar = ProgressBar.new("#{table}", records.size)
+
+        records.each do |fixture|
+
+          pbar.inc
+
           fixture_with_saved_ids = prepare_for_merge(fixture)
 
           if Configuration.scoped_tables.include? table
@@ -59,32 +78,44 @@ module MergeDb
 
           target.insert_fixture(fixture_with_saved_ids, table)
         end
+
+        pbar.finish
       end
     end
 
     def restore_association_references
+      puts "Restore association references"
+
       target.tables.each do |table|
-        puts "\nRestore #{table} associations"
         query = "select * from #{table}"
 
         restored_columns = Hash.new {|hash, key| hash[key] = [] }
 
-        target.select_all(query).each do |record|
-          putc "."
+        records = target.select_all(query)
+
+        pbar = ProgressBar.new("#{table}", records.size)
+
+        records.each do |record|
+          pbar.inc
           record.each do |column, old_id|
             if column =~ /__id$/ && !old_id.nil? && !restored_columns[column].include?(old_id)
 
               restored_columns[column] << old_id
 
-              association = find_association_by_old_id(column, old_id)
+              if association = find_association_by_old_id(column, old_id)
 
-              new_id = association["id"]
+                new_id = association["id"]
 
-              update_query = "update #{table} set #{normalize_column_name(column)} = #{new_id} where #{column} = #{old_id}"
-              target.update(update_query)
+                update_query = "update #{table} set #{normalize_column_name(column)} = #{new_id} where #{column} = #{old_id}"
+                target.update(update_query)
+              else
+                ActiveRecord::Base.logger.error "Can't find #{column} with old id: #{old_id}"
+              end
             end
           end
         end
+
+        pbar.finish
 
         unless restored_columns.empty?
           columns_with_null = restored_columns.keys.collect {|column| "#{column} = NULL"}.join(", ")

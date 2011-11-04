@@ -18,6 +18,14 @@ class Db < Thor
     MergeDb::Merger.new(:source => source, :target => target).merge
   end
 
+  desc "restore", "restore associations"
+  method_option :target, :aliases => "-t", :required => true, :desc => "Database for restoring"
+  def restore
+    target = options[:target]
+
+    MergeDb::Merger.new(:target => target).restore_associations
+  end
+
   desc "prepare", "creates columns to store ids from source database"
   method_option :target, :aliases => "-t", :required => true, :desc => "database into which data will be copied"
   def prepare

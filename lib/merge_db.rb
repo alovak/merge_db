@@ -6,6 +6,7 @@ $LOAD_PATH.unshift(File.dirname(__FILE__))
 require 'active_record'
 # require 'ruby-debug'
 require 'logger'
+require 'progressbar'
 
 require 'merge_db/configuration'
 require 'merge_db/merger'
